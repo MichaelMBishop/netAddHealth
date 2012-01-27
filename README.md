@@ -1,13 +1,17 @@
 netAddHealth
+
 Michael Metcalf Bishop
 
 Data Source: The Longitudinal Study of Adolescent Health
+
 Purpose: Prepare data and create functions for social network analysis with R and igraph
          It is often convenient to apply functions to add health network data by school or by community.
          See the functions at the very end: makeIgraphList and makeVertexAttribList
          which can be easily and fruitfully modified 
+         
 Output: igraphList which is a list of igraph objects, one for each community
         net5 which is the the data imported into net4, plus new measures of centrality 
+        
 Note: Change the location of the data indicated in the first few lines of code.
       Then, if you already have the three listed packages installed, the remainder of the code may
       be executed at once.
