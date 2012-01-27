@@ -7,7 +7,7 @@
 #          See the functions at the very end: makeIgraphList and makeVertexAttribList
 #          which can be easily and fruitfully modified 
 # Output: igraphList which is a list of igraph objects, one for each community
-#         net5 which is the the data imported into net4, plus new measures of centrality 
+#         net4 which is the the data imported into net4, plus new measures of centrality 
 # Note: Change the location of the data indicated in the first few lines of code.
 #       Then, if you already have the three listed packages installed, the remainder of the code may
 #       be executed at once.
@@ -380,6 +380,8 @@ rm("mf1aid.conflict")
 # I set nominations to males to NA if they are also nominated, by the same person, as females.
 # A better approach would certainly be possible by carefully considering discrepancies between
 # self-indicated gender, and whether/how different people nominate someone as either a male or female friend.
+# I don't do anything about the fact that some people are nominated as a "male friend" by one 
+# person, and a "female friend" by another.
    # Note that the lines below make the nomination type indicators above slightly out of date                 
                                                  
 net4$mf1aid <- with(net4, ifelse((mf1aidc==1) & (mapply(identical, x=mf1aid, y=ff5aid) |
