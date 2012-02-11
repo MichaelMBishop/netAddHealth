@@ -10,7 +10,7 @@
 #         net4 which is the the data imported into net4, plus new measures of centrality 
 # Note: Change the location of the data indicated in the first few lines of code.
 #       Then, if you already have the three listed packages installed, the remainder of the code may
-#       be executed at once.
+#       be executed at once.  
 
 # Acknowledgements: I owe thanks to Joyce Tabor and James Moody for assistance but any errors are my own. 
 ##################################################################
@@ -22,16 +22,23 @@ library(igraph)
 library(reshape)
 
 # Import SAS datasets 
-sfri <- sasxport.get("J:/DataAll/sfriend.xpt")
+sfri <- sasxport.get("J:/DataAll/sfriend.xpt") # raw nomination data provided by Add Health
 sfri <- sfri[which(sfri$sqid!=999999),] #all sqid=999999 already have all NA for all variables
-inschool <- sasxport.get("J:/DataAll/Inschool.xpt")
-inhome <- sasxport.get("J:/DataAll/allwave1.xpt") #500mb file so it takes a while
-net <- sasxport.get("J:/DataAll/network.xpt")
+inschool <- sasxport.get("J:/DataAll/Inschool.xpt") # In School Survey, Wave I, provided by Add Health
+inhome <- sasxport.get("J:/DataAll/allwave1.xpt") #500mb file so it takes a while, In Home survey provided by Add Health
+net <- sasxport.get("J:/DataAll/network.xpt") # social network data provided by Add Health / James Moody
+# edunet <- sasxport.get("J:/DataAll/edunet.xpt") # local position data provided by Add Health / Ken Frank 
+
+# If you don't have access to all the datasets listed above, you can still get the data into igraph and do some analysis
+# e.g., After editing the code below, skipping much of it, sfriend.xpt and Inschool.xpt would be enough to get started
+# inhome/allwave1.xpt is helpful because I use it to improve data cleaning and extract community/commid
+# net/network.xpt is used in this script only to compare the pre-computed network data with what we compute from raw data
 
 # Merge all resulting in net4
 net2 <- merge(inschool[c("sqid","aid","sschlcde","s2")], sfri, by="sqid", all=TRUE)
 net3 <- merge(net[c("aid","scid","size","idgx2","odgx2","noutnom","tab113","bcent10x")], net2, by="aid", all=TRUE)
 net4 <- merge(inhome[c("aid", "bio.sex", "scid","sscid","commid","sschlcde", "h1gi18", "h1gi19", "h1gi20", "h1gi21")], net3, by="aid", all=TRUE)
+# net4 <- merge(net4, edunet, by="aid", all=TRUE) 
 
 
 
