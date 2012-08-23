@@ -1,4 +1,5 @@
 ##################################################################
+# netAddHealth.R
 # Michael Metcalf Bishop, bishop@uchicago.edu
 
 # Data Source: The Longitudinal Study of Adolescent Health
@@ -12,11 +13,12 @@
 #       Then, if you already have the three listed packages installed, the remainder of the code may
 #       be executed at once.  
 
-# Acknowledgements: I owe thanks to Joyce Tabor and James Moody for assistance but any errors are my own. 
+# Acknowledgements: I owe thanks to Joyce Tabor and James Moody for assistance but any errors are my own. Please submit/push suggestions for improvements and I'll add your name here.
 ##################################################################
 
-#load("J:/R/net4share.RData")
+load("J:/R/net4share2.RData")
 #load("J:/R/net4simple.RData")
+#save.image("J:/R/net4share2.RData")
 library(Hmisc)
 library(igraph)
 library(reshape)
@@ -25,7 +27,7 @@ library(reshape)
 sfri <- sasxport.get("J:/DataAll/sfriend.xpt") # raw nomination data provided by Add Health
 sfri <- sfri[which(sfri$sqid!=999999),] #all sqid=999999 already have all NA for all variables
 inschool <- sasxport.get("J:/DataAll/Inschool.xpt") # In School Survey, Wave I, provided by Add Health
-inhome <- sasxport.get("J:/DataAll/allwave1.xpt") #500mb file so it takes a while, In Home survey provided by Add Health
+inhome <- sasxport.get("J:/DataAll/allwave1.xpt") # 500mb file so it takes a while, In Home survey provided by Add Health
 net <- sasxport.get("J:/DataAll/network.xpt") # social network data provided by Add Health / James Moody
 # edunet <- sasxport.get("J:/DataAll/edunet.xpt") # local position data provided by Add Health / Ken Frank 
 
@@ -34,16 +36,88 @@ net <- sasxport.get("J:/DataAll/network.xpt") # social network data provided by 
 # inhome/allwave1.xpt is helpful because I use it to improve data cleaning and extract community/commid
 # net/network.xpt is used in this script only to compare the pre-computed network data with what we compute from raw data
 
+# Creating aid2 with new ids where aid is missing
+inschool$aid2 <- ifelse(is.na(inschool$aid), NA, as.numeric(as.character(inschool$aid)))
+missingIds <- is.na(inschool$aid2)
+replacementIds <- seq(length(missingIds))
+describe(missingIds)
+describe(replacementIds)
+missingIds
+replacementIds
+
+inschool$aid2[missingIds] <- replacementIds[missingIds]
+rm(missingIds)
+rm(replacementIds)
+describe(duplicated(inschool$aid2)) #check that there are no duplicate ids
+label(inschool$aid2) <- "aid - Respondent Identifier - with missing values replaced"
+inschool$aid2.is <- inschool$aid2
+
+
+
+
 # Merge all resulting in net4
-net2 <- merge(inschool[c("sqid","aid","sschlcde","s2")], sfri, by="sqid", all=TRUE)
+net2 <- merge(inschool[c("sqid","aid","aid2","sschlcde","s2")], sfri, by="sqid", all=TRUE)
 net3 <- merge(net[c("aid","scid","size","idgx2","odgx2","noutnom","tab113","bcent10x")], net2, by="aid", all=TRUE)
 net4 <- merge(inhome[c("aid", "bio.sex", "scid","sscid","commid","sschlcde", "h1gi18", "h1gi19", "h1gi20", "h1gi21")], net3, by="aid", all=TRUE)
-# net4 <- merge(net4, edunet, by="aid", all=TRUE) 
+net4 <- merge(net4, edunet, by="aid", all=TRUE) 
 
+describe(net$aid)
+class(net$aid)
+net$aid2 <- as.nc(net$aid)
+describe(net$aid2)
+class(net$aid2)
+
+describe(edunet$aid)
+class(edunet$aid)
+edunet$aid2 <- as.nc(edunet$aid)
+describe(edunet$aid2)
+class(edunet$aid2)
+describe(duplicated(edunet$aid)) #check that there are no duplicate ids
+duplicated(edunet$aid2)
+describe(edunet$aid2[which(duplicated(edunet$aid2)==TRUE)])
+describe(edunet$aid2[which(duplicated(edunet$aid2)==FALSE)])
+View(edunet)
+
+View(orderedunet)
+
+describe(edunet$aid[which(duplicated(edunet$aid)==TRUE)])
+describe(edunet$aid[which(duplicated(edunet$aid)==FALSE)])
+View(edunet[which(duplicated(edunet$aid)==TRUE),])
+View(edunet[order(edunet$aid),])
+ord <- order
+?sort
+
+t <- edunet[which(duplicated(edunet$aid)==TRUE),]
+u <- edunet[which(duplicated(edunet$aid)==FALSE),]
+
+describe(t$enyrlp)
+describe(u$enyrlp)
+describe(edunet$enyrlp)
+
+describe(edunet)
+
+t$test <- 1
+u$test <- 2
+tu <- merge(t, u, by="aid", all=TRUE)
+dim(t)
+dim(u)
+dim(tu)
+
+describe(t$test)
+describe(u$test)
+describe(tu$test)
+describe(tu$aid)
+
+duplicated(t$aid)
+
+duplicated(edunet$aid[which(duplicated(edunet$aid)==TRUE)])
 
 
 rm("inhome", "inschool", "net2", "net", "net3", "sfri")
 ls()
+
+
+
 net4 <- rename(net4, c(sschlcde.x="sschlcde.inhome", sschlcde.y="sschlcde.inschool"))
 net4 <- rename(net4, c(scid.x="scid.inhome", scid.y="scid.net"))
 
@@ -83,6 +157,11 @@ describe(net4$sschlcde2)
 df.commid <- aggregate(net4[,c("ncommid"), drop=FALSE], by=list(sschlcde2=net4$sschlcde2), FUN=median, na.rm=TRUE)
 #            2) I still couldn't find the community for some schools,
 #               so Joyce Tabor provided me with these assignments:    
+
+
+t <- ih[which(ih$commid %in% c(459, 475, 479, 489)),]
+table(as.nc(t$scid))
+table(as.nc(t$scid), as.nc(t$commid))
 
 # assign correct commid for schools which have sister w/ commid
 df.commid$ncommid[which(df.commid$sschlcde2==59)] <- 459
@@ -344,14 +423,14 @@ net4$maleVeryLikely <- with(net4, ifelse(indegreeAsMale>1.1 & net4$indegreeAsMal
                       ifelse(indegreeAsFemale>1.1 & net4$indegreeAsMaleP<.24, 0, NA)))
 
 
-net4$s2n <- with(net4, ifelse(as.numeric(s2)==9, NA, s2))
+net4$male.is <- with(net4, ifelse(as.numeric(s2)==9, NA, s2)) #from in-school survey
 net4$bio.sexn <- with(net4, ifelse(as.numeric(bio.sex)>=3, NA, bio.sex))
 
-net4$s2male <- (with(net4, ifelse(is.na(s2n) & is.na(bio.sexn), NA,
-                        ifelse(is.na(s2n) & !is.na(bio.sexn), bio.sexn,
-                        ifelse(!is.na(s2n) & is.na(bio.sexn), s2n,
-                        ifelse(s2n==1 & bio.sexn==1, 1,
-                        ifelse(s2n==2 & bio.sexn==2, 2, NA))))))-2)*(-1)
+net4$s2male <- (with(net4, ifelse(is.na(male.is) & is.na(bio.sexn), NA,
+                        ifelse(is.na(male.is) & !is.na(bio.sexn), bio.sexn,
+                        ifelse(!is.na(male.is) & is.na(bio.sexn), male.is,
+                        ifelse(male.is==1 & bio.sexn==1, 1,
+                        ifelse(male.is==2 & bio.sexn==2, 2, NA))))))-2)*(-1)
 label(net4$s2male) <- "Male indicator, imputed values from inhome$bio.sex & s2, conflicts become NA"
 
 
@@ -360,7 +439,7 @@ label(net4$male) <- "Male Indicator, values imputed/corrected using inhome$bio.s
 
            
 dropVars <- names(net4) %in% c("indegreeAsFemale", "indegreeAsMale", "indegreeAsMaleP",
-              "indegreeAsMF", "sexConflict","maleVeryLikely", "maleLikely", "s2male", "s2n", "bio.sexn", "bio.sex")
+              "indegreeAsMF", "sexConflict","maleVeryLikely", "maleLikely", "s2male", "male.is", "bio.sexn", "bio.sex")
 net4 <- net4[!dropVars]                 
 rm("dropVars")
 
@@ -434,10 +513,33 @@ dropVars <- names(net4) %in% c("mf1aidc", "mf2aidc", "mf3aidc", "mf4aidc", "mf5a
 net4 <- net4[!dropVars]
 rm("dropVars")
 
+load("J:/R/m6dd.RData")
+net4 <- merge(net4, m6d[c("aid2", "race4f","race5f")], by="aid2", all=TRUE)
+rm("m5d","m6f","m6m","m6s")
+names(net4black)
+net4black <- net4[which(net4$race5f=="Black"),]
+
+names(edunet)
+describe(net4$enclustw)
+describe(net4$enpclusw)
+describe(net4$encombcw)
+table(net4[which(is.na(net4$encombcw)==FALSE)]$ncommid2,net4$encombcw, useNA="ifany")
+table(net4$ncommid2[which(is.na(net4$encombcw)==FALSE)],net4$encombcw[which(is.na(net4$encombcw)==FALSE)], useNA="ifany")
+
+describe(net4[which(is.na(net4$encombcw)==FALSE)]$ncommid2)
+describe(net4$ncommid2[which(is.na(net4$encombcw)==FALSE)])
+describe(net4$ncommid2)
+describe(net4$encombcw)
+?split
+?cbind
+
+#net4$comEncombcw <- outer(net4$ncommid2, net4$encombcw, paste, sep="")
+net4$comEncombcw <- cbind(net4$ncommid2, net4$encombcw)
+describe(net4$comEncombcw)
 
 essentiallyZeroNetworkDataSchools <- c("46", "61", "70", "79", "94", "179", "203", "222", "265", "322", "327") #79 has 1 nom
 netsch <- net4[which(!net4$sschlcde2 %in% essentiallyZeroNetworkDataSchools),] 
-
+netsch <- net4black[which(!net4black$sschlcde2 %in% essentiallyZeroNetworkDataSchools),]
 
 #Break net4 into list of dataframes based on ncommid2
 netSplit <- split(netsch,netsch$ncommid2)
@@ -473,6 +575,15 @@ lsos()
 memory.profile()
 library(igraph)
 igraphList <- lapply(netSplit,FUN = makeIgraphList) 
+
+makeVertexAttribList <- function(netList) {
+  vertexAttrib <- data.frame(as.numeric(as.character(V(netList)$name)), 
+                             degree(netList, mode="in"), 
+                             degree(netList, mode="out") 
+                             )
+  names(vertexAttrib) <- c("aid2", "indegreeb", "outdegreeb")
+  vertexAttrib
+}
 
 makeVertexAttribList <- function(netList) {
   vertexAttrib <- data.frame(as.numeric(as.character(V(netList)$name)), 
