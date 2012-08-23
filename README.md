@@ -21,7 +21,7 @@ Acknowledgements: I owe thanks to Joyce Tabor and James Moody for assistance but
 
 Details:
     
-    - Import SAS datasets: sfriend.xpt, Inschool.xpt, allwave1.xpt, network.xpt
+    - Import SAS datasets: sfriend.xpt, Inschool.xpt, allwave1.xpt, network.xpt, edunet.xpt
     - Merge all into net4
     - Create new and better school id (sschlcde2) and community id (ncommid2)
       which rely, in part, on info from Joyce Tabor, not in the original datasets
