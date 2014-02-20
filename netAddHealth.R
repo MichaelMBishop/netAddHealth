@@ -5,7 +5,7 @@
 # Data Source: The Longitudinal Study of Adolescent Health
 # Purpose: Prepare data and create functions for social network analysis with R and igraph
 #          It is often convenient to apply functions to add health network data by school or by community.
-#          See the functions at the very end: makeIgraphList and makeVertexAttribList
+#          See the functions at the very end: MakeIgraphList and MakeVertexAttribList
 #          which can be easily and fruitfully modified 
 # Output: igraphList which is a list of igraph objects, one for each community
 #         net4 which is the the data imported into net4, plus new measures of centrality 
@@ -13,23 +13,29 @@
 #       Then, if you already have the three listed packages installed, the remainder of the code may
 #       be executed at once.  
 
-# Acknowledgements: I owe thanks to Joyce Tabor and James Moody for assistance but any errors are my own. Please submit/push suggestions for improvements and I'll add your name here.
+# Acknowledgements: I owe thanks to Joyce Tabor, James Moody, & Peter McMahan for assistance but any errors are my own. 
+#   Please submit/push suggestions for improvements and I'll add your name here.
 ##################################################################
 
-load("J:/R/net4share2.RData")
-#load("J:/R/net4simple.RData")
-#save.image("J:/R/net4share2.RData")
+# file paths
+kRootPath         <- file.path("~","addhealth")
+kDataPath         <- file.path("~","addhealth","data")
+
+load(file.path(kDataPath, "net4share2.RData"))
+#load(file.path(kDataPath, "net4simple.RData"))
+#save.image(file.path(kDataPath, "net4share2.RData"))
 library(Hmisc)
 library(igraph)
 library(reshape)
 
 # Import SAS datasets 
-sfri <- sasxport.get("J:/DataAll/sfriend.xpt") # raw nomination data provided by Add Health
+sfri <- sasxport.get(file.path(kDataPath, "sfriend.xpt")) # raw nomination data provided by Add Health
 sfri <- sfri[which(sfri$sqid!=999999),] #all sqid=999999 already have all NA for all variables
-inschool <- sasxport.get("J:/DataAll/Inschool.xpt") # In School Survey, Wave I, provided by Add Health
-inhome <- sasxport.get("J:/DataAll/allwave1.xpt") # 500mb file so it takes a while, In Home survey provided by Add Health
-net <- sasxport.get("J:/DataAll/network.xpt") # social network data provided by Add Health / James Moody
-# edunet <- sasxport.get("J:/DataAll/edunet.xpt") # local position data provided by Add Health / Ken Frank 
+inschool <- sasxport.get(file.path(kDataPath, "Inschool.xpt")) # In School Survey, Wave I, provided by Add Health
+inhome <- sasxport.get(file.path(kDataPath, "allwave1.xpt")) # 500mb file so it takes a while, In Home survey provided by Add Health
+net <- sasxport.get(file.path(kDataPath, "network.xpt")) # social network data provided by Add Health / James Moody
+# edunet <- sasxport.get(file.path(kDataPath, "edunet.xpt")) # local position data provided by Add Health / Ken Frank 
+ 
 
 # If you don't have access to all the datasets listed above, you can still get the data into igraph and do some analysis
 # e.g., After editing the code below, skipping much of it, sfriend.xpt and Inschool.xpt would be enough to get started
@@ -547,7 +553,7 @@ rm("essentiallyZeroNetworkDataSchools", "netsch")
 
 
 #Define a function to apply to each element of netSplit
-makeIgraphList <- function(dataPiece) {
+MakeIgraphList <- function(dataPiece) {
     netEdges <- NULL
 
     for (idi in c("mf1aid", "mf2aid", "mf3aid", "mf4aid", "mf5aid", "ff1aid", "ff2aid", "ff3aid", "ff4aid", "ff5aid")) {
@@ -576,7 +582,7 @@ memory.profile()
 library(igraph)
 igraphList <- lapply(netSplit,FUN = makeIgraphList) 
 
-makeVertexAttribList <- function(netList) {
+MakeVertexAttribList <- function(netList) {
   vertexAttrib <- data.frame(as.numeric(as.character(V(netList)$name)), 
                              degree(netList, mode="in"), 
                              degree(netList, mode="out") 
@@ -585,7 +591,7 @@ makeVertexAttribList <- function(netList) {
   vertexAttrib
 }
 
-makeVertexAttribList <- function(netList) {
+MakeVertexAttribList <- function(netList) {
   vertexAttrib <- data.frame(as.numeric(as.character(V(netList)$name)), 
                              degree(netList, mode="in"), 
                              degree(netList, mode="out"), 
@@ -599,15 +605,15 @@ makeVertexAttribList <- function(netList) {
 
                   
 
-vertexAttrib <- do.call("rbind", lapply(igraphList, FUN = makeVertexAttribList))
+vertexAttrib <- do.call("rbind", lapply(igraphList, FUN = MakeVertexAttribList))
 
 net4 <- merge(net4, vertexAttrib, by="aid2", all=TRUE)
 
 names(net4)
 ls()
 #rm("vertexAttrib")
-#save.image("J:/R/net4share.RData")
-# save.image("J:/R/net4simple.RData") # removed extra data from net4share
+#save.image(file.path(kDataPath, "J:/R/net4share.RData"))
+# save.image(file.path(kDataPath, "J:/R/net4simple.RData")) # removed extra data from net4share
 
 ### Note: Like most social science data, this social network data is somewhat messy
 # For example, there is data missing, and it is not missing at random.
