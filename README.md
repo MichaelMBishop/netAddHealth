@@ -16,7 +16,7 @@ Note: Change the location of the data indicated in the first few lines of code.
       Then, if you already have the three listed packages installed, the remainder of the code may
       be executed at once.
 
-Acknowledgements: I owe thanks to Joyce Tabor and James Moody for assistance but any errors are my own. 
+Acknowledgements: I owe thanks to Joyce Tabor, James Moody & Peter McMahan for assistance but any errors are my own. 
 
 
 Details:
